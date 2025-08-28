@@ -1,133 +1,140 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { ChevronDown, Github, Linkedin, Mail } from 'lucide-react';
+import React, { useState, useEffect, useRef } from "react";
+import gsap from "gsap";
+import { MotionPathPlugin } from "gsap/MotionPathPlugin";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-const Hero: React.FC = () => {
-  const scrollToAbout = () => {
-    const element = document.getElementById('about');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+gsap.registerPlugin(MotionPathPlugin, ScrollTrigger);
+
+const TextMaskPortfolio = () => {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const imageRefs = useRef<(SVGGElement | null)[]>([]);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setMousePosition({
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+        });
+      }
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener("mousemove", handleMouseMove);
+      return () => container.removeEventListener("mousemove", handleMouseMove);
     }
-  };
+  }, []);
+
+  // GSAP MotionPath for multiple images
+  useEffect(() => {
+    if (imageRefs.current.length > 0) {
+      imageRefs.current.forEach((el, index) => {
+        if (!el) return;
+
+        gsap.set(el, { scale: 0.6, autoAlpha: 0 });
+
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: "top top",
+            end: "bottom bottom",
+            scrub: 2,
+          },
+        });
+
+        tl.to(el, {
+          duration: 5,
+          autoAlpha: 1,
+          ease: "power1.inOut",
+          motionPath: {
+            path: "#path",
+            align: "#path",
+            alignOrigin: [0.5, 0.5],
+            autoRotate: false,
+          },
+        })
+          .to(el, { autoAlpha: 0, duration: 2 }, "+=1"); // fade out after travel
+      });
+    }
+  }, []);
+
+  const backgroundImages = [
+    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=400&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1635001177743-7d3f60102fb2?w=400&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1618556450994-a6a128ef0d9d?w=400&h=400&fit=crop",
+    "https://images.unsplash.com/photo-1634017839442-8e03adbb6cd2?w=400&h=400&fit=crop",
+  ];
 
   return (
-    <section id="hero" className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-cyan-900/20"></div>
-      
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(50)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-blue-400 rounded-full opacity-30"
-            initial={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-            }}
-            animate={{
-              y: [null, -100, 0],
-              opacity: [0.3, 0.8, 0.3],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="container mx-auto px-6 text-center relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: 'easeOut' }}
+    <div
+      ref={containerRef}
+      className="relative w-full h-screen overflow-hidden cursor-none flex"
+      style={{ backgroundColor: "#7A9B8E" }}
+    >
+      {/* LEFT SIDE - Text */}
+      <div className="flex-1 relative z-10 h-full flex flex-col justify-center items-start px-8 md:px-16">
+        <h1
+          className="text-6xl md:text-8xl font-black leading-tight max-w-4xl"
+          style={{ color: "#F4F1E8" }}
         >
-          <motion.h1
-            className="text-5xl md:text-7xl font-bold mb-6"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.8 }}
-          >
-            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-              Full Stack
-            </span>
-            <br />
-            <span className="text-white">Developer</span>
-          </motion.h1>
-
-          <motion.p
-            className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.8 }}
-          >
-            I craft beautiful, functional web experiences with modern technologies.
-            Passionate about clean code, user experience, and innovative solutions.
-          </motion.p>
-
-          <motion.div
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
-          >
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 px-8 py-3 rounded-full font-semibold transition-all duration-300 shadow-lg hover:shadow-xl"
-            >
-              View My Work
-            </motion.button>
-            
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
-              className="border-2 border-blue-400 hover:bg-blue-400 hover:text-gray-900 px-8 py-3 rounded-full font-semibold transition-all duration-300"
-            >
-              Get In Touch
-            </motion.button>
-          </motion.div>
-
-          <motion.div
-            className="flex justify-center space-x-6"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.8 }}
-          >
-            {[
-              { Icon: Github, href: '#' },
-              { Icon: Linkedin, href: '#' },
-              { Icon: Mail, href: '#' },
-            ].map(({ Icon, href }, index) => (
-              <motion.a
-                key={index}
-                href={href}
-                whileHover={{ scale: 1.2, y: -2 }}
-                whileTap={{ scale: 0.9 }}
-                className="p-3 rounded-full bg-gray-800/50 backdrop-blur-sm hover:bg-blue-500/20 transition-all duration-300 border border-gray-700/50"
-              >
-                <Icon size={24} />
-              </motion.a>
-            ))}
-          </motion.div>
-        </motion.div>
+          Challenging the limits of visual comfort, feeding the inherent drive
+          to create.
+        </h1>
       </div>
 
-      {/* Scroll indicator */}
-      <motion.button
-        onClick={scrollToAbout}
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-        animate={{ y: [0, 10, 0] }}
-        transition={{ duration: 2, repeat: Infinity }}
-      >
-        <ChevronDown className="text-gray-400 hover:text-white transition-colors duration-300" size={32} />
-      </motion.button>
-    </section>
+      {/* RIGHT SIDE - Motion Path Images */}
+      <div className="flex-1 relative h-full">
+        <svg
+          id="motionPath"
+          viewBox="-20 0 557 190"
+          className="absolute right-0 top-1/4 h-2/3 w-full z-30"
+        >
+          <path
+            id="path"
+            fill="none"
+            stroke="transparent" // invisible path
+            strokeWidth="2"
+            d="M8,102 C15,83 58,25 131,24 206,24 233,63 259,91 
+               292,125 328,155 377,155 464,155 497,97 504,74"
+          />
+          {backgroundImages.map((img, index) => (
+            <g
+              key={index}
+              ref={(el) => (imageRefs.current[index] = el)}
+              className="motion-image"
+            >
+              <image href={img} width="80" height="80" clipPath="circle(40)" />
+            </g>
+          ))}
+        </svg>
+      </div>
+
+      {/* Profile Section */}
+      <div className="absolute bottom-8 left-8 z-30 flex items-center space-x-3">
+        <div
+          className="w-12 h-12 rounded-full flex items-center justify-center"
+          style={{ backgroundColor: "#E67E22" }}
+        >
+          <span className="text-white font-bold">YN</span>
+        </div>
+      </div>
+
+      {/* Custom Cursor */}
+      <div
+        className="absolute w-4 h-4 rounded-full pointer-events-none z-40 transition-transform duration-100 ease-out"
+        style={{
+          left: mousePosition.x - 8,
+          top: mousePosition.y - 8,
+          transform: "scale(1.2)",
+          backgroundColor: "#E67E22",
+        }}
+      />
+    </div>
   );
 };
 
-export default Hero;
+export default TextMaskPortfolio;
