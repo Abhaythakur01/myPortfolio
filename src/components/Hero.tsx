@@ -1,140 +1,193 @@
-import React, { useState, useEffect, useRef } from "react";
-import gsap from "gsap";
-import { MotionPathPlugin } from "gsap/MotionPathPlugin";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import React, { useEffect, useRef, useState } from 'react';
 
-gsap.registerPlugin(MotionPathPlugin, ScrollTrigger);
+const statsData = [
+  { label: 'Years of Innovation', value: 6 },
+  { label: 'Project Completed', value: 16 },
+];
 
-const TextMaskPortfolio = () => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const imageRefs = useRef<(SVGGElement | null)[]>([]);
+const NebulaHero = () => {
+  const vantaRef = useRef(null);
+  const vantaEffect = useRef(null);
+
+  const [counts, setCounts] = useState(statsData.map(() => 0));
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        setMousePosition({
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top,
+    // --- Dynamic counter logic ---
+    let interval;
+    let resetTimeout;
+
+    const animate = () => {
+      let progress = 0;
+      interval = setInterval(() => {
+        progress += 1;
+        setCounts(statsData.map((stat) => Math.min(stat.value, Math.floor((progress / 100) * stat.value))));
+
+        if (progress >= 100) {
+          clearInterval(interval);
+          resetTimeout = setTimeout(() => {
+            setCounts(statsData.map(() => 0));
+            animate(); // restart loop
+          }, 3000);
+        }
+      }, 30); // speed of counting
+    };
+
+    animate();
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(resetTimeout);
+    };
+  }, []);
+
+  // --- Vanta background effect (your original code) ---
+  useEffect(() => {
+    const loadVanta = () => {
+      if (window.VANTA && window.THREE) {
+        vantaEffect.current = window.VANTA.GLOBE({
+          el: vantaRef.current,
+          mouseControls: true,
+          touchControls: true,
+          gyroControls: false,
+          minHeight: 200.0,
+          minWidth: 200.0,
+          scale: 1.0,
+          scaleMobile: 1.0,
+          color: 0x5e62ff,
+          color2: 0x9966ff,
+          size: 1.5,
+          backgroundColor: 0x000000,
         });
       }
     };
 
-    const container = containerRef.current;
-    if (container) {
-      container.addEventListener("mousemove", handleMouseMove);
-      return () => container.removeEventListener("mousemove", handleMouseMove);
-    }
+    const threeScript = document.createElement('script');
+    threeScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js';
+    threeScript.onload = () => {
+      const vantaScript = document.createElement('script');
+      vantaScript.src = 'https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.globe.min.js';
+      vantaScript.onload = loadVanta;
+      document.head.appendChild(vantaScript);
+    };
+    document.head.appendChild(threeScript);
+
+    return () => {
+      if (vantaEffect.current) {
+        vantaEffect.current.destroy();
+      }
+    };
   }, []);
-
-  // GSAP MotionPath for multiple images
-  useEffect(() => {
-    if (imageRefs.current.length > 0) {
-      imageRefs.current.forEach((el, index) => {
-        if (!el) return;
-
-        gsap.set(el, { scale: 0.6, autoAlpha: 0 });
-
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top top",
-            end: "bottom bottom",
-            scrub: 2,
-          },
-        });
-
-        tl.to(el, {
-          duration: 5,
-          autoAlpha: 1,
-          ease: "power1.inOut",
-          motionPath: {
-            path: "#path",
-            align: "#path",
-            alignOrigin: [0.5, 0.5],
-            autoRotate: false,
-          },
-        })
-          .to(el, { autoAlpha: 0, duration: 2 }, "+=1"); // fade out after travel
-      });
-    }
-  }, []);
-
-  const backgroundImages = [
-    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=400&fit=crop",
-    "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=400&h=400&fit=crop",
-    "https://images.unsplash.com/photo-1635001177743-7d3f60102fb2?w=400&h=400&fit=crop",
-    "https://images.unsplash.com/photo-1618556450994-a6a128ef0d9d?w=400&h=400&fit=crop",
-    "https://images.unsplash.com/photo-1634017839442-8e03adbb6cd2?w=400&h=400&fit=crop",
-  ];
 
   return (
-    <div
-      ref={containerRef}
-      className="relative w-full h-screen overflow-hidden cursor-none flex"
-      style={{ backgroundColor: "#7A9B8E" }}
-    >
-      {/* LEFT SIDE - Text */}
-      <div className="flex-1 relative z-10 h-full flex flex-col justify-center items-start px-8 md:px-16">
-        <h1
-          className="text-6xl md:text-8xl font-black leading-tight max-w-4xl"
-          style={{ color: "#F4F1E8" }}
-        >
-          Challenging the limits of visual comfort, feeding the inherent drive
-          to create.
-        </h1>
-      </div>
+    <div className="relative min-h-screen bg-black text-white overflow-x-hidden" style={{ fontFamily: "'Outfit', sans-serif" }}>
+      {/* Vanta Background */}
+      <div ref={vantaRef} className="absolute inset-0 z-0"></div>
 
-      {/* RIGHT SIDE - Motion Path Images */}
-      <div className="flex-1 relative h-full">
-        <svg
-          id="motionPath"
-          viewBox="-20 0 557 190"
-          className="absolute right-0 top-1/4 h-2/3 w-full z-30"
-        >
-          <path
-            id="path"
-            fill="none"
-            stroke="transparent" // invisible path
-            strokeWidth="2"
-            d="M8,102 C15,83 58,25 131,24 206,24 233,63 259,91 
-               292,125 328,155 377,155 464,155 497,97 504,74"
-          />
-          {backgroundImages.map((img, index) => (
-            <g
-              key={index}
-              ref={(el) => (imageRefs.current[index] = el)}
-              className="motion-image"
-            >
-              <image href={img} width="80" height="80" clipPath="circle(40)" />
-            </g>
-          ))}
-        </svg>
-      </div>
+      <main className="relative z-10 px-6 pt-32 pb-24"> {/* shifted down with pt-32 */}
+        <div className="max-w-7xl mx-auto">
+          {/* Hero Section */}
+          <div className="flex flex-col items-center text-center mb-20">
+            <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
+              We build{' '}
+              <span
+                className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent"
+                style={{
+                  background: 'linear-gradient(90deg, #5E62FF, #9966FF)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                immersive worlds
+              </span>{' '}
+              that inspire
+            </h1>
+            <p className="text-lg text-gray-400 max-w-2xl mb-10">
+              Pioneering digital experiences that fuse art with technology to transform brands and create meaningful connections.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {/* SVG Blob Button for View Portfolio */}
+              <div className="relative">
+                <svg
+                  viewBox="45 60 400 320"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-80 h-25 cursor-pointer"
+                  style={{
+                    filter: 'drop-shadow(0 0 40px rgba(0, 0, 0, 0.3))',
+                  }}
+                >
+                  <defs>
+                    <mask id="knockout-text">
+                      <rect width="100%" height="100%" fill="#fff" x="0" y="0" />
+                      <text
+                        x="140"
+                        y="227"
+                        fill="#000"
+                        style={{
+                          fontSize: '38px',
+                          fontFamily: 'Raleway, serif',
+                          fontWeight: '900',
+                        }}
+                      >
+                        PORTFOLIO
+                      </text>
+                    </mask>
+                  </defs>
+                  <path
+                    fill="#fff"
+                    d="M 90 210 C 90 180 90 150 90 150 C 150 150 180 150 180 150 C 180 150 300 150 300 150 C 300 150 330 150 390 150 C 390 150 390 180 390 210 C 390 240 390 270 390 270 C 330 270 300 270 300 270 C 300 270 180 270 180 270 C 180 270 150 270 90 270 C 90 270 90 240 90 210"
+                    mask="url(#knockout-text)"
+                    className="hover:fill-gray-100 transition-colors"
+                    style={{
+                      cursor: 'pointer',
+                      animation: 'blob 2s infinite forwards',
+                      transformOrigin: '50% 50%',
+                    }}
+                  />
+                </svg>
+              </div>
+            </div>
 
-      {/* Profile Section */}
-      <div className="absolute bottom-8 left-8 z-30 flex items-center space-x-3">
-        <div
-          className="w-12 h-12 rounded-full flex items-center justify-center"
-          style={{ backgroundColor: "#E67E22" }}
-        >
-          <span className="text-white font-bold">YN</span>
+            {/* Keyframe animation styles */}
+            <style jsx>{`
+              @import url("https://fonts.googleapis.com/css?family=Raleway:900");
+              
+              @keyframes blob {
+                25% {
+                  d: path("M 90 210 C 90 180 110 160 130 160 C 160 160 180 140 200 130 C 230 120 270 100 290 140 C 310 170 360 100 380 140 C 400 160 420 180 420 210 C 420 240 410 290 380 280 C 360 270 330 280 310 290 C 290 300 260 300 250 290 C 230 270 190 310 170 280 C 160 260 90 240 90 210");
+                  transform: rotate(-5deg);
+                }
+                50% {
+                  d: path("M 90 210 C 90 180 100 150 120 130 C 150 100 180 140 200 130 C 230 120 270 100 290 140 C 300 160 350 130 380 140 C 420 150 420 180 420 210 C 420 240 410 300 380 280 C 360 270 340 230 300 260 C 280 280 240 310 220 290 C 200 270 180 280 160 280 C 130 280 90 240 90 210");
+                }
+                75% {
+                  d: path("M 90 210 C 90 180 110 180 130 170 C 150 160 170 130 200 130 C 240 130 260 150 290 140 C 310 130 360 120 380 140 C 400 160 420 180 420 210 C 420 240 410 260 380 270 C 350 280 320 270 300 260 C 270 250 250 280 230 290 C 200 310 150 300 130 280 C 110 260 90 240 90 210");
+                  transform: rotate(5deg);
+                }
+              }
+            `}</style>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 gap-6 text-center">
+            {statsData.map((stat, i) => (
+              <div key={i} className="p-6 rounded-xl bg-white/5 backdrop-blur-sm">
+                <div className="text-indigo-500 text-4xl font-bold mb-1">
+                  {counts[i]}+
+                </div>
+                <div className="text-sm text-gray-400">{stat.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      </main>
 
-      {/* Custom Cursor */}
-      <div
-        className="absolute w-4 h-4 rounded-full pointer-events-none z-40 transition-transform duration-100 ease-out"
-        style={{
-          left: mousePosition.x - 8,
-          top: mousePosition.y - 8,
-          transform: "scale(1.2)",
-          backgroundColor: "#E67E22",
-        }}
+      {/* Load Google Fonts */}
+      <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet"
       />
     </div>
   );
 };
 
-export default TextMaskPortfolio;
+export default NebulaHero;
